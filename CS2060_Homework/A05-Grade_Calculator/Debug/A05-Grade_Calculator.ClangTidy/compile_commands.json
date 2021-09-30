@@ -1,0 +1,7 @@
+[
+  {
+    "directory": "C:\\Dev\\C\\ProgrammingWithC\\CS2060\\CS2060_Homework\\A05-Grade_Calculator",
+    "command": "\"C:\\WINDOWS\\system32\\CL.exe\" \/c \/ZI \/JMC \/nologo \/W3 \/WX- \/diagnostics:column \/Od \/Oy- \/D CODE_ANALYSIS \/D _CRT_SECURE_NO_WARNINGS \/EHsc \/RTC1 \/MDd \/GS \/fp:precise \/permissive- \/Fo\"Debug\\\\\" \/Gd \/TC   \"C:\\Dev\\C\\ProgrammingWithC\\CS2060\\CS2060_Homework\\A05-Grade_Calculator\\A05-Grade_Calculator_Source.c\"",
+    "file": "C:\\Dev\\C\\ProgrammingWithC\\CS2060\\CS2060_Homework\\A05-Grade_Calculator\\A05-Grade_Calculator_Source.c"
+  }
+]
