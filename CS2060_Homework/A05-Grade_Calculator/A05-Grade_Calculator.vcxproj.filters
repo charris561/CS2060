@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="A05-Grade_Calculator_Source.c">
+    <ClCompile Include="AO5_Grades_Calculator_Source.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
