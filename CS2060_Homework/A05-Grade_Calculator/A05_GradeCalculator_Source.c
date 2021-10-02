@@ -13,8 +13,13 @@
 #include <stdio.h>
 
 //#Define constants
-#define STUDENTS 2
+#define STUDENTS 10
 #define CATEGORIES 5
+#define CLASS_ACTIVITY 0
+#define ASSIGNMENT 1
+#define PROJECT 2
+#define MIDTERM 3
+#define FINAL 4
 
 //constants
 const double CLASS_ACTIVITY_WEIGHT = 0.1;
@@ -27,6 +32,8 @@ const double FINAL_WEIGHT = 0.15;
 void initArray(int array[][STUDENTS], size_t categories, size_t students);
 void displayGrades(const int grades[][STUDENTS], size_t categories, size_t students);
 void getGrades(int grades[][STUDENTS], size_t categories, size_t students);
+void calcGrades(double finalGrades[], const int grades[][STUDENTS], size_t categories, size_t students);
+void displayFinalGrades(double grades[], size_t numStudents);
 
 int main(void) {
 
@@ -35,17 +42,29 @@ int main(void) {
 
 	if (totalWeight == 1) {
 
-		//allocate memory for 2d array
+		//allocate memory for grades matrix and finalGrades array
 		int grades[CATEGORIES][STUDENTS];
+		double finalGrades[STUDENTS];
 
 		//initialize all elements to 0 using function
 		initArray(grades, CATEGORIES, STUDENTS);
+
+		//initialize final grades to 0
+		for (size_t i = 0; i < STUDENTS; i++) {
+			finalGrades[i] = 0;
+		}
 
 		//get user defined grades
 		getGrades(grades, CATEGORIES, STUDENTS);
 
 		//display grades
 		displayGrades(grades, CATEGORIES, STUDENTS);
+
+		//calculate final grades
+		calcGrades(finalGrades, grades, CATEGORIES, STUDENTS);
+
+		//display the final grades
+		displayFinalGrades(finalGrades, STUDENTS);
 
 	}//end totalWeight if stmt
 
@@ -86,23 +105,23 @@ void displayGrades(const int grades[][STUDENTS], size_t categories, size_t stude
 		//display category name
 		switch (row) {
 
-		case 0:
+		case CLASS_ACTIVITY:
 			printf("Category %d: %s\n", (row + 1), "Class Activity");
 			break;
 
-		case 1:
+		case ASSIGNMENT:
 			printf("Category %d: %s\n", (row + 1), "Assignments");
 			break;
 
-		case 2:
+		case PROJECT:
 			printf("Category %d: %s\n", (row + 1), "Project");
 			break;
 
-		case 3:
+		case MIDTERM:
 			printf("Category %d: %s\n", (row + 1), "Midterm");
 			break;
-			
-		case 4:
+
+		case FINAL:
 			printf("Category %d: %s\n", (row + 1), "Final");
 			break;
 
@@ -124,9 +143,6 @@ void displayGrades(const int grades[][STUDENTS], size_t categories, size_t stude
 
 		}//end col for
 
-		//inserts a new line
-		puts("");
-
 	}//end row for
 
 }//end displayGrades
@@ -134,29 +150,31 @@ void displayGrades(const int grades[][STUDENTS], size_t categories, size_t stude
 //getGrades prompts the user to enter the grades then stores them in the passed in array
 void getGrades(int grades[][STUDENTS], size_t categories, size_t students) {
 
+	puts("Please enter class grades: ");
+
 	//iterate through rows
 	for (size_t row = 0; row < categories; row++) {
 
 		//display category name
 		switch (row) {
 
-		case 0:
+		case CLASS_ACTIVITY:
 			printf("Category %d: %s\n", (row + 1), "Class Activity");
 			break;
 
-		case 1:
+		case ASSIGNMENT:
 			printf("Category %d: %s\n", (row + 1), "Assignments");
 			break;
 
-		case 2:
+		case PROJECT:
 			printf("Category %d: %s\n", (row + 1), "Project");
 			break;
 
-		case 3:
+		case MIDTERM:
 			printf("Category %d: %s\n", (row + 1), "Midterm");
 			break;
 
-		case 4:
+		case FINAL:
 			printf("Category %d: %s\n", (row + 1), "Final");
 			break;
 
@@ -176,3 +194,94 @@ void getGrades(int grades[][STUDENTS], size_t categories, size_t students) {
 	puts("");
 
 }//end getGrades
+
+//function calcGrades calculates the final grades for the students based on their grades' weighted average
+void calcGrades(double finalGrades[], const int grades[][STUDENTS], size_t categories, size_t students) {
+
+	puts("\nCalculating Grades...\n");
+
+	//initialize control variables
+	int j = 0; //counter for finalGrades[]
+	double weight = 0;
+	double categoryGrade = 0;
+	double finalGrade = 0;
+
+	//iterate through all categories for student then go to next student
+	for (size_t col = 0; col < students; col++) {
+
+		for (size_t row = 0; row < categories; row++) {
+
+			//switch the row to determine what category we are in and set weight appropriately
+			switch (row) {
+
+			case CLASS_ACTIVITY:
+				weight = CLASS_ACTIVITY_WEIGHT;
+				break;
+
+			case ASSIGNMENT:
+				weight = ASSIGNMENT_WEIGHT;
+				break;
+
+			case PROJECT:
+				weight = PROJECT_WEIGHT;
+				break;
+
+			case MIDTERM:
+				weight = MIDTERM_WEIGHT;
+				break;
+
+			case FINAL:
+				weight = FINAL_WEIGHT;
+				break;
+
+			}//end switch
+
+			//calculate the category grade
+			categoryGrade = weight * grades[row][col];
+
+			//add to final grade
+			finalGrade += categoryGrade;
+
+			//if last row (i.e. last category for student)
+			if (row == FINAL) {
+
+				//assign finalGrade to array, iterate counter, then reset variable
+				finalGrades[j] = finalGrade;
+				j++;
+				finalGrade = 0;
+
+			}//end if
+
+			//reset control variables
+			weight = 0;
+
+		}//end row for
+
+	}//end col for
+
+}//end caldGrades
+
+//function will display the final grades and the class average
+void displayFinalGrades(double grades[], size_t numStudents) {
+
+	puts("Student Final Grades: ");
+
+	//initialize necessary variables
+	double sum = 0;
+	double average = 0;
+
+	//iterate through array and print final grades/ calculate sum
+	for (size_t student = 0; student < numStudents; student++) {
+
+		printf("Student %d: %.1f\n", (student + 1), grades[student]);
+ 		sum += (double)grades[student];
+
+	}//end for
+
+	//calculate average
+	average = sum / STUDENTS;
+
+	//print average
+	printf("\nClass Average: %.1f\n", average);
+
+}//end displayFinalGrades
