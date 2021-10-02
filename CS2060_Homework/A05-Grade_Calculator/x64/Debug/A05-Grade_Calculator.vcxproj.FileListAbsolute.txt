@@ -1,3 +1,6 @@
 C:\Dev\C\ProgrammingWithC\CS2060\CS2060_Homework\A05-Grade_Calculator\x64\Debug\A05-Grade_Calculator.exe.lastcodeanalysissucceeded
 C:\Dev\C\ProgrammingWithC\CS2060\CS2060_Homework\A05-Grade_Calculator\x64\Debug\NativeCodeAnalysis.read.1.tlog
 C:\Dev\C\ProgrammingWithC\CS2060\CS2060_Homework\A05-Grade_Calculator\x64\Debug\A05-Grade_Calculator.exe
+C:\Dev\C\CS2060_ProgrammingWithC\MainRepository\CS2060\CS2060_Homework\A05-Grade_Calculator\x64\Debug\A05-Grade_Calculator.exe.lastcodeanalysissucceeded
+C:\Dev\C\CS2060_ProgrammingWithC\MainRepository\CS2060\CS2060_Homework\A05-Grade_Calculator\x64\Debug\NativeCodeAnalysis.read.1.tlog
+C:\Dev\C\CS2060_ProgrammingWithC\MainRepository\CS2060\CS2060_Homework\A05-Grade_Calculator\x64\Debug\A05-Grade_Calculator.exe

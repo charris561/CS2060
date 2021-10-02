@@ -13,21 +13,32 @@
 #include <stdio.h>
 
 //constants
-const int NUM_STUDENTS = 10;
+#define int NUM_STUDENTS = 10;
+const double CLASS_ACTIVITY_WEIGHT = 0.1;
+const double ASSIGNMENT_WEIGHT = 0.3;
+const double PROJECT_WEIGHT = 0.3;
+const double MIDTERM_WEIGHT = 0.15;
+const double FINAL_WEIGHT = 0.15;
 
 int main(void) {
 
-	//prompt user to enter grades and store in array
-	//initialize array
-	int grades[10];//see constant can be used later
+	//check to make sure all weighted parts are going to equal 100%
+	double totalWeight = CLASS_ACTIVITY_WEIGHT +
+		ASSIGNMENT_WEIGHT + 
+		PROJECT_WEIGHT + 
+		MIDTERM_WEIGHT + 
+		FINAL_WEIGHT;
+	if (totalWeight == 1) {
 
-	//walk the array and enter grades
-	
+		//write main
+
+	}//end totalWeight if stmt
+
+	else {
+		puts("Total weight of categories does not equal 100%!");
+		puts("Exiting program.");
+	}
+
+	return EXIT_SUCCESS;
 
 }//main
-
-void enterGrades(int grades[]) {
-
-	for (size_t i = 0; i < NUM_STUDENTS; )
-
-}//enterGrades
