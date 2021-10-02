@@ -1,2 +1,0 @@
-﻿  AO5_Grades_Calculator_Source.c
-C:\Dev\C\CS2060_ProgrammingWithC\MainRepository\CS2060\CS2060_Homework\A05-Grade_Calculator\AO5_Grades_Calculator_Source.c : fatal error C1041: cannot open program database 'C:\Dev\C\CS2060_ProgrammingWithC\MainRepository\CS2060\CS2060_Homework\A05-Grade_Calculator\x64\Debug\vc142.pdb'; if multiple CL.EXE write to the same .PDB file, please use /FS
