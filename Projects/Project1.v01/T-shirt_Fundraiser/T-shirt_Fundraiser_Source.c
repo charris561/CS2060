@@ -32,11 +32,12 @@ bool getPin();
 double getPrice();
 char getUserDecision();
 int getPercent();
-char selectSize();
+char getSize();
 char getColor();
-double getPayment(double cost);
+double getPayment(double cost, int percent);
 void printReceipt(char size, char color, double cost, double payment, double totalDonations, int percentDonated);
 double calcDonation(int percent, double payment);
+void printEndOfDay(double totalSales, double totalDonations);
 
 //supporting functions
 bool validScanf(int scanfReturnVal);
@@ -47,14 +48,89 @@ void printSale(double price, int percent, bool startSequence);
 
 int main(void) {
 
-	double payment = 25;
-	char size = 'x';
-	char color = 'b';
-	double cost = 25;
-	double totalDonations = 30;
-	int percentdonated = 25;
+	double price = 0; //stores admin determined price for t-shirts
+	int percent = 0; //stores admin determined percentage to be donated
+	bool startSequence = false; //flag to see if program is in start sequence
+	bool endOfDay = false; //flag used to see if end of day has been indicated by admin
+	double totalDonated = 0; //stores the total amount donated
+	double totalPayments = 0; //stores the total payments received
+	double payment = 0; //stores the current payment
+	char size = ' '; //stores size of shirt
+	char color = ' '; //stores the color user wants
 
-	printReceipt(size, color, cost, payment, totalDonations, percentdonated);
+	//get pin entry to start selling program
+	puts("Please enter administrator pin to begin setup sequence:");
+
+	//if admin setup pin is correct
+	if (getPin()) {
+
+		/*
+		* Admin Setup Sequence:
+		*/
+		//get price for shirts and percentage to be donated
+		price = getPrice();
+		percent = getPercent();
+		startSequence = true;
+		printSale(price, percent, startSequence);
+
+
+		/*
+		* Customer selling Sequence
+		*/
+		startSequence = false;
+
+		//get sales while admin exit not started
+		do {
+
+			//print the sale
+			printSale(price, percent, startSequence);
+
+			//get size
+			size = getSize();
+
+			//if not admin exit code
+			if (size != ADMIN_SIZE) {
+
+				//get golor and payment
+				color = getColor();
+				payment = getPayment(price, percent);
+
+				//add payment to total payments and calculate donation
+				totalPayments += payment;
+				totalDonated += calcDonation(percent, payment);
+
+				//prompt user to see if they would like a receipt
+				puts("Would you like a receipt?");
+
+				//if yes, print receipt
+				if (getUserDecision() == 'y') {
+					printReceipt(size, color, price, payment, totalDonated, percent);
+				}
+				else { puts("Thank you for your donation! Have a great day!"); }
+
+			}//end if NOT admin exit code
+
+			//if size equals admin exit code
+			else if (size == ADMIN_SIZE) {
+
+				puts("You have entered the admin menu.");
+
+				//if valid pin
+				if (getPin()) { endOfDay = true; }
+
+				//if not valid pin
+				else { endOfDay = false; }
+
+			}//end if admin exit size
+
+		} while (!endOfDay);
+
+		//print end of day details
+		printEndOfDay(totalPayments, totalDonated);
+
+	}// end core program
+
+	puts("Exiting program");
 	
 
 	return EXIT_SUCCESS;
@@ -210,8 +286,8 @@ int getPercent() {
 
 }//end getPercent()
 
-//selectSize function gets the user's selected size
-char selectSize() {
+//getSize function gets the user's selected size
+char getSize() {
 
 	bool validInput = false; //flag used to tell if the input was valid
 	char userChoice = ' '; //used to hold the user's selected size
@@ -269,7 +345,7 @@ char selectSize() {
 
 	return userChoice;
 
-}//selectSize()
+}//getSize()
 
 //getColor() function gets the user selected color
 char getColor() {
@@ -315,7 +391,7 @@ char getColor() {
 }//end getColor
 
 //getPayment() function gets the user payment **will likely have credit card feature added in future
-double getPayment(double cost) {
+double getPayment(double cost, int percent) {
 
 	unsigned int zipcode = 0; //stores user's zip code
 	unsigned int userEntry = 0; //stores scanf return value
@@ -339,9 +415,9 @@ double getPayment(double cost) {
 	//print zip entered
 	printf("Zip Code set to: %u\n", zipcode);
 
-	//get payment
+	//get payment and print payment and donation
 	payment = cost;
-	printf("You paid: $%.2f\n", payment);
+	printf("You paid: $%.2f and donated: $%.2f\n", payment, calcDonation(percent, payment));
 
 	return payment;
 
@@ -354,7 +430,7 @@ void printReceipt(char size, char color, double cost, double payment, double tot
 
 	//generate receipt number between 1000 and 9999 (4 digits)
 	srand(time(0));
-	receiptNum = 1000 + rand() % 9999;
+	receiptNum = 1000 + (rand() % 9000);
 
 
 	//print receipt
@@ -400,6 +476,19 @@ double calcDonation(int percent, double payment) {
 	return donation;
 
 }//end calcDonation
+
+//printEndOfDay() prints the end of day details
+void printEndOfDay(double totalSales, double totalDonations) {
+
+	puts("\n-----------------------------------------------------------------");
+	puts("End of day summary: ");
+	puts("-----------------------------------------------------------------\n");
+
+	//print total sales and amount raised for organization
+	printf("Total sales today: $%.2f\n", totalSales);
+	printf("Total donations for organization: $%.2f\n\n", totalDonations);
+
+}//end printEndOFDay()
 
 
 /*
@@ -460,7 +549,7 @@ void printSale(double price, int percent, bool startSequence) {
 	if (startSequence) {
 		puts("\n-----------------------------------------------------------------");
 		puts("T-shirt sale program setup complete with the following setup:");
-		printf("Price: %.2f\nPercent to donate: %d%c\n",
+		printf("Price: $%.2f\nPercent to donate: %d%c\n",
 			price, percent, '%');
 		puts("-----------------------------------------------------------------\n");
 	}
@@ -468,7 +557,7 @@ void printSale(double price, int percent, bool startSequence) {
 	else {
 		puts("\n-----------------------------------------------------------------");
 		puts("Welcome to CS2060 T-Shirt Fundraiser! Here are the details for today's sale:");
-		printf("Price: %.2f\nPercent being donated: %d%c\n",
+		printf("Price: $%.2f\nPercent being donated: %d%c\n",
 			price, percent, '%');
 		puts("-----------------------------------------------------------------\n");
 	}
