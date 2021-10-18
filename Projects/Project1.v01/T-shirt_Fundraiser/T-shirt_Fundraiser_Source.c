@@ -22,8 +22,8 @@ const unsigned int MAX_PIN_ATTEMPTS = 3;
 const unsigned int VALID_PIN = 81405;
 const double MIN_PRICE = 10;
 const double MAX_PRICE = 50;
-const int ZIP_MIN = 10000;
-const int ZIP_MAX = 99999;
+const unsigned int ZIP_MIN = 10000;
+const unsigned int ZIP_MAX = 99999;
 #define ADMIN_SIZE 'q'
 
 //function prototypes
@@ -59,7 +59,11 @@ int main(void) {
 	char color = ' '; //stores the color user wants
 
 	//get pin entry to start selling program
-	puts("Please enter administrator pin to begin setup sequence:");
+	puts("Welcome to CS2060 T-Shirt Fundraiser Program\n");
+
+	puts("-----------------------------------------------------------------");
+	puts("Administrator setup Sequence:");
+	puts("-----------------------------------------------------------------");
 
 	//if admin setup pin is correct
 	if (getPin()) {
@@ -100,20 +104,20 @@ int main(void) {
 				totalDonated += calcDonation(percent, payment);
 
 				//prompt user to see if they would like a receipt
-				puts("Would you like a receipt?");
+				puts("\nWould you like a receipt?");
 
 				//if yes, print receipt
 				if (getUserDecision() == 'y') {
 					printReceipt(size, color, price, payment, totalDonated, percent);
 				}
-				else { puts("Thank you for your donation! Have a great day!"); }
+				else { puts("\nThank you for your donation! Have a great day!"); }
 
 			}//end if NOT admin exit code
 
 			//if size equals admin exit code
 			else if (size == ADMIN_SIZE) {
 
-				puts("You have entered the admin menu.");
+				puts("\nYou have entered the admin menu.");
 
 				//if valid pin
 				if (getPin()) { endOfDay = true; }
@@ -146,7 +150,7 @@ int main(void) {
 bool getPin() {
 
 	bool validEntry = false; //flag to see if pin is valid
-	int invalidCount = 0; //counts the number of invalid attempts
+	unsigned int invalidCount = 0; //counts the number of invalid attempts
 	int userEntry = 0; //to store scanf return
 	int pin = 0; //stores user inputted pin
 
@@ -170,7 +174,7 @@ bool getPin() {
 			invalidCount++; 
 		}
 
-		if (invalidCount == MAX_PIN_ATTEMPTS) { puts("Max invalid pin attempts reached!\n"); }
+		if (invalidCount == MAX_PIN_ATTEMPTS) { puts("\nMax invalid pin attempts reached!\n"); }
 
 	} while (!validEntry && invalidCount < MAX_PIN_ATTEMPTS);
 
@@ -193,18 +197,18 @@ double getPrice() {
 		//get valid user input
 		do {
 
-			printf("%s", "Please enter a price for the T-shirts: ");
+			printf("\nPlease enter a price for the T-shirts ($%.2f - $%.2f): ", MIN_PRICE, MAX_PRICE);
 			userEntry = scanf("%lf", &price);
 			clrBuff();
 
 			//if validScanf return value and price is within range
 			if (validScanf(userEntry) && (price <= MAX_PRICE && price >= MIN_PRICE)) { validInput = true; }
-			else { puts("Invalid Price"); }
+			else { puts("\nInvalid Price"); }
 
 		} while (!validInput);
 
 		//confirm price is correct
-		printf("Is $%.2f the correct price? ", price);
+		printf("\nIs $%.2f the correct price? ", price);
 		userChoice = getUserDecision();
 
 		if (userChoice == 'y') { correctPrice = true; }
@@ -212,7 +216,7 @@ double getPrice() {
 	} while (!correctPrice);
 
 	//display price
-	printf("Price set at: $%.2f\n", price);
+	printf("\nPrice set at: $%.2f\n", price);
 
 	return price;
 
@@ -228,14 +232,14 @@ char getUserDecision() {
 	//get user choice for y or n
 	do {
 
-		printf("%s", "(Y)es or (N)o? ");
+		printf("\n%s", "(Y)es or (N)o? ");
 		userEntry = scanf("%c", &userChoice);
 		clrBuff();
 		userChoice = tolower(userChoice);
 		
 		//if valid scanf return and userchoice is a y or n
 		if (validScanf(userEntry) && (userChoice == 'y' || userChoice == 'n')) { validInput = true; }
-		else { puts("Invalid Entry"); }
+		else { puts("\nInvalid Entry"); }
 
 	} while (!validInput);
 
@@ -258,21 +262,21 @@ int getPercent() {
 		//get valid user input
 		do {
 
-			printf("%s", "Please enter percentage to be donated: ");
+			printf("\n%s", "Please enter percentage to be donated: ");
 			userEntry = scanf("%d", &percent);
 			clrBuff();
 
 			//if validScanf return value and price is within range
-			if (validScanf(userEntry) && (percent <= 100 && percent >= 0)) { validInput = true; }
+			if (validScanf(userEntry) && (percent <= 100 && percent > 0)) { validInput = true; }
 			else { 
-				puts("Invalid Percentage"); 
+				puts("\nInvalid Percentage"); 
 				validInput = false;
 			}
 
 		} while (!validInput);
 
 		//confirm price is correct
-		printf("Is %d%c the correct percentage? ", percent, '%');
+		printf("\nIs %d%c the correct percentage? ", percent, '%');
 		userChoice = getUserDecision();
 
 		if (userChoice == 'y') { correctPercent = true; }
@@ -280,7 +284,7 @@ int getPercent() {
 
 	} while (!correctPercent);
 
-	printf("Percentage set to %d%c\n", percent, '%');
+	printf("\nPercentage set to %d%c\n", percent, '%');
 
 	return percent;
 
@@ -315,21 +319,21 @@ char getSize() {
 				break;
 			}
 
-			default: puts("Invalid Size");
+			default: puts("\nInvalid Size");
 
 			}//end switch
 
 		}//if scanf valid
-		else { puts("Invalid Size"); }
+		else { puts("\nInvalid Size"); }
 
 		//if valid, print the size and see if its the one the customer wants
 		if (validInput) {
 
-			printf("%s", "You selected: ");
+			printf("\n%s", "You selected: ");
 			printSize(userChoice);
 
 			//check to see if it is the size the user wants
-			puts("Is this the correct size?");
+			puts("\nIs this the correct size?");
 			correctInput = getUserDecision();
 
 			if (correctInput == 'n') { validInput = false; }
@@ -357,22 +361,22 @@ char getColor() {
 	//get user choice for color desired
 	do {
 
-		printf("%s", "Please select your color (B)lack or (W)hite: ");
+		printf("\n%s", "Please select your color (B)lack or (W)hite: ");
 		userEntry = scanf("%c", &userChoice);
 		clrBuff();
 		userChoice = tolower(userChoice);
 
 		//if valid scanf return and userchoice is a y or n
 		if (validScanf(userEntry) && (userChoice == 'b' || userChoice == 'w')) { validInput = true; }
-		else { puts("Invalid Entry"); }
+		else { puts("\nInvalid Entry"); }
 
 		//check to see if this is the color the user wanted
 		if (userChoice == 'b') {
-			printf("%s", "You selected black, is this correct? ");
+			printf("\n%s", "You selected black, is this correct? ");
 			if (getUserDecision() == 'n') { validInput = false; }
 		}
 		else if (userChoice == 'w') {
-			printf("%s", "You selected white, is this correct? ");
+			printf("\n%s", "You selected white, is this correct? ");
 			if (getUserDecision() == 'n') { validInput = false; }
 		}
 
@@ -380,10 +384,10 @@ char getColor() {
 
 	//print final color selection
 	if (userChoice == 'b') {
-		puts("Color set to black.");
+		puts("\nColor set to black.");
 	}
 	else if (userChoice == 'w') {
-		puts("Color set to white.");
+		puts("\nColor set to white.");
 	}
 
 	return userChoice;
@@ -398,26 +402,28 @@ double getPayment(double cost, int percent) {
 	double payment = 0; //stores user payment
 	bool validInput = false; //flag to see if input was valid
 
+	puts("\n-----------Payment-----------");
+
 	//get zip code
 	do {
 
 		//prompt for zip code
-		printf("%s", "Please enter your zip code: ");
+		printf("\n%s", "Please enter your 5 digit zip code: ");
 		userEntry = scanf("%u", &zipcode);
 		clrBuff();
 
 		//allows zip codes min <= zipcode <= max
 		if (validScanf(userEntry) && (zipcode <= ZIP_MAX && zipcode >= ZIP_MIN)) { validInput = true; }
-		else { puts("Invalid Entry"); }
+		else { puts("\nInvalid Entry"); }
 
 	} while (!validInput);
 
 	//print zip entered
-	printf("Zip Code set to: %u\n", zipcode);
+	printf("\nZip Code set to: %u\n", zipcode);
 
 	//get payment and print payment and donation
 	payment = cost;
-	printf("You paid: $%.2f and donated: $%.2f\n", payment, calcDonation(percent, payment));
+	printf("\nYou paid: $%.2f and donated: $%.2f\n", payment, calcDonation(percent, payment));
 
 	return payment;
 
