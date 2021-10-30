@@ -22,6 +22,7 @@
 int getRandNum();
 void getWord(int randNum, char* output, char* words[], bool firstWord, bool lastWord);
 void getSentence(char* output, char* articles[], char* nouns[], char* verbs[], char* prepositions[]);
+void clrOut(char* output);
 
 int main(void) {
 
@@ -46,10 +47,10 @@ int main(void) {
 
 			//create sentence and store in output
 			getSentence(output, articlePtr, nounPtr, verbPtr, prepositionPtr);
-			printf("%s\n", output);
+			fprintf(fptr, "%s\n", output);
 
 			//clears the output
-			clrOutput(output);
+			clrOut(output);
 
 		}//end writing sentences
 
@@ -63,7 +64,7 @@ int main(void) {
 //getRandNum gets a random number between 0 - 4
 int getRandNum() {
 
-	//initialize and seed the random number
+	//initialize
 	int randNum = 0;
 
 	//make randNum 0 - 4
@@ -76,9 +77,6 @@ int getRandNum() {
 //gets a word from possible words and random number
 void getWord(int randNum, char* output, char* words[], bool firstWord, bool lastWord) {
 
-	//initialize necessary variables
-	
-	
 	//concatenate word with output
 	strcat(output, words[randNum]);
 
@@ -107,3 +105,13 @@ void getSentence(char* output, char* articles[], char* nouns[], char* verbs[], c
 	getWord(getRandNum(), output, nouns,false, true); //first word false, last word true
 
 }//end getSentence
+
+//clears output string
+void clrOut(char* output) {
+
+	//assigns null character to each index
+	for (size_t i = 0; i < MAX_SENT_LENGTH; i++) {
+		output[i] = '\0';
+	}
+
+}//end clrOut
