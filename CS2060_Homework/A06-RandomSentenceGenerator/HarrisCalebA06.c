@@ -20,17 +20,17 @@
 
 //preprocessor
 int getRandNum();
-void getWord(int randNum, char* output, char* words[], bool firstWord, bool lastWord);
-void getSentence(char* output, char* articles[], char* nouns[], char* verbs[], char* prepositions[]);
+void getWord(int randNum, char* output, const char* words[], bool firstWord, bool lastWord);
+void getSentence(char* output, const char* articles[], const char* nouns[], const char* verbs[], const char* prepositions[]);
 void clrOut(char* output);
 
 int main(void) {
 
 	//define all words necessary and output string
-	char* articlePtr[5] = { "the", "a", "one", "some", "any" };
-	char* nounPtr[5] = { "baby", "bunny", "dog", "town", "car" };
-	char* verbPtr[5] = { "drove", "jumped", "ran", "walked", "skipped" };
-	char* prepositionPtr[5] = { "to", "from", "over", "under", "on" };
+	const char* articlePtr[5] = { "the", "a", "one", "some", "any" };
+	const char* nounPtr[5] = { "baby", "bunny", "dog", "town", "car" };
+	const char* verbPtr[5] = { "drove", "jumped", "ran", "walked", "skipped" };
+	const char* prepositionPtr[5] = { "to", "from", "over", "under", "on" };
 	char output[MAX_SENT_LENGTH] = {""};
 
 	//initialize file pointer and open file
@@ -41,6 +41,9 @@ int main(void) {
 	if (fptr == NULL) { puts("File could not be read, exiting.");}
 
 	else {
+
+		//seed rand()
+		srand(time(0));
 
 		//write sentences to file
 		for (int i = 0; i < NUM_SENTENCES; i++) {
@@ -53,6 +56,9 @@ int main(void) {
 			clrOut(output);
 
 		}//end writing sentences
+
+		//close file
+		fclose(fptr);
 
 	}//end if file opened correctly
 	
@@ -68,14 +74,14 @@ int getRandNum() {
 	int randNum = 0;
 
 	//make randNum 0 - 4
-	randNum = (rand() % 4);
+	randNum = (rand() % 5);
 
 	return randNum;
 
 }//end getRandNum
 
 //gets a word from possible words and random number
-void getWord(int randNum, char* output, char* words[], bool firstWord, bool lastWord) {
+void getWord(int randNum, char* output, const char* words[], bool firstWord, bool lastWord) {
 
 	//concatenate word with output
 	strcat(output, words[randNum]);
@@ -95,7 +101,7 @@ void getWord(int randNum, char* output, char* words[], bool firstWord, bool last
 }//end getNoun
 
 //get words in order of article, noun, verb, preposition, article, noun and store in output
-void getSentence(char* output, char* articles[], char* nouns[], char* verbs[], char* prepositions[]) {
+void getSentence(char* output, const char* articles[], const char* nouns[], const char* verbs[], const char* prepositions[]) {
 
 	getWord(getRandNum(), output, articles,true, false); //first word true, last word false
 	getWord(getRandNum(), output, nouns, false, false);
