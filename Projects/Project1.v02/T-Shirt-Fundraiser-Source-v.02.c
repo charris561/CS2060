@@ -53,9 +53,9 @@ bool validScanf(int scanfReturnVal);
 void clrBuff();
 char* printSizeOrColor(char userChoice);
 void printSale(double price, int percent, bool startSequence);
-char getValidChar(char validChars[]);
+char getValidChar(const char validChars[]);
 bool isValidPriceOrPercent(char* str, double range[]);
-bool validateCreditCardNum(char cardNum[]);
+bool validateCreditCardNum(const char cardNum[]);
 void initTotalSalesAndTotalDonations(double arr[]);
 
 
@@ -561,7 +561,7 @@ void printSale(double price, int percent, bool startSequence) {
 }//end printSale()
 
 //gets a valid char out of passed in array
-char getValidChar(char validChars[]) {
+char getValidChar(const char validChars[]) {
 
 	bool validInput = false; //flag to tell if input was valid
 	char userChoice = ' '; //used to hold the selection
@@ -631,7 +631,7 @@ bool isValidPriceOrPercent(char* str, double range[]) {
 }//end isValidPriceOrPercent
 
 //sees if a credit card number is valid
-bool validateCreditCardNum(char cardNum[]) {
+bool validateCreditCardNum(const char cardNum[]) {
 
 	bool validCardNum = true;
 	int i = 0;
