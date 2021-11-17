@@ -29,11 +29,12 @@ const unsigned int ZIP_MIN = 10000;
 const unsigned int ZIP_MAX = 99999;
 const char* COLOR_STRING = { "blac(k), (w)hite, (r)ed, (o)range, (b)lue, (p)urple" };
 const char* SIZES_STRING = { "(s)mall, (m)edium, (l)arge, (x)tra Large" };
+const char* RECEIPTS_FILE_PATH = "C:\\Dev\\CS2060 - Programming with C\\tshirtapp\\receipt.txt";
+const char* END_OF_DAY_FILE_PATH = "C:\\Dev\\CS2060 - Programming with C\\tshirtapp\\tshirtfund.txt";
 #define VALID_COLORS {'k', 'w', 'r', 'o', 'b', 'p'}
 #define VALID_SIZES {'s', 'm', 'l', 'x', 'q' }
 #define MAX_COLORS_OR_SIZES 6
 #define ADMIN_SIZE 'q'
-#define MAX_DIGITS 2
 #define MAX_CREDIT_CARD_SIZE 19
 
 //function prototypes
@@ -43,35 +44,37 @@ char getUserDecision();
 double getPriceOrPercent(bool isGettingPrice);
 char getSizeOrColor(bool isGettingSize);
 double getPayment(double cost, int percent);
-void printReceipt(char size, char color, double cost, double payment, double totalDonations, int percentDonated);
-double calcDonation(int percent, double payment);
+void printReceipt(char size, char color, double cost, double payment, double totalDonations, double percentDonated);
+double calcDonation(double percent, double payment);
 void printEndOfDay(double totalSales, double totalDonations);
 
 //supporting functions
 bool validScanf(int scanfReturnVal);
 void clrBuff();
-void printSizeOrColor(char userChoice);
+char* printSizeOrColor(char userChoice);
 void printSale(double price, int percent, bool startSequence);
 char getValidChar(char validChars[]);
 bool isValidPriceOrPercent(char* str, double range[]);
 bool validateCreditCardNum(char cardNum[]);
+void initTotalSalesAndTotalDonations(double arr[]);
 
 
 int main(void) {
-
-	while (1) {
-		getPayment(25, 15);
-	}
 
 	double price = 0; //stores admin determined price for t-shirts
 	double percent = 0; //stores admin determined percentage to be donated
 	bool startSequence = false; //flag to see if program is in start sequence
 	bool endOfDay = false; //flag used to see if end of day has been indicated by admin
-	double totalDonated = 0; //stores the total amount donated
-	double totalPayments = 0; //stores the total payments received
 	double payment = 0; //stores the current payment
 	char size = ' '; //stores size of shirt
 	char color = ' '; //stores the color user wants
+
+	//initialize total sales and total donations
+	double totSalesAndTotDonations[2] = {0, 0};
+	initTotalSalesAndTotalDonations(totSalesAndTotDonations);
+	double totalPayments = totSalesAndTotDonations[0]; //stores the total payments received
+	double totalDonated = totSalesAndTotDonations[1]; //stores the total amount donated
+	
 
 	//get pin entry to start selling program
 	puts("Welcome to CS2060 T-Shirt Fundraiser Program\n");
@@ -132,7 +135,7 @@ int main(void) {
 			//if size equals admin exit code
 			else if (size == ADMIN_SIZE) {
 
-				puts("\nYou have entered the admin menu.");
+				puts("\n**********You have entered the admin menu.**********\n");
 
 				//if valid pin
 				if (getPin()) { endOfDay = true; }
@@ -149,7 +152,7 @@ int main(void) {
 
 	}// end core program
 
-	puts("Exiting program");
+	puts("\nExiting program");
 	
 
 	return EXIT_SUCCESS;
@@ -201,7 +204,7 @@ bool getPin() {
 double getPriceOrPercent(bool isGettingPrice) {
 
 	double priceOrPercent = 0;
-	char userSelection[MAX_DIGITS + 1];
+	char userSelection[10];
 	bool validInput = false;
 	double num;
 	char userChoice = ' ';
@@ -222,8 +225,17 @@ double getPriceOrPercent(bool isGettingPrice) {
 			validRange[0] = MIN_PERCENT, validRange[1] = MAX_PERCENT;
 		}
 
-		fgets(userSelection, MAX_DIGITS + 1, stdin);
-		clrBuff();
+		fgets(userSelection, 10, stdin);
+
+		//clear the buffer
+		if (strchr(userSelection, '\n') != NULL) {
+			for (size_t i = 0; i < MAX_CREDIT_CARD_SIZE; i++) {
+				if (userSelection[i] == '\n') { userSelection[i] = '\0'; }
+			}
+		}
+		else {
+			clrBuff();
+		}
 
 		//validate either price or percent
 		if (isValidPriceOrPercent(userSelection, validRange)) {
@@ -313,8 +325,7 @@ char getSizeOrColor(bool isGettingSize) {
 		type = "Size";
 	}
 
-	printf("%s set to ", type);
-	printSizeOrColor(userSelection);
+	printf("%s set to %s\n\n", type, printSizeOrColor(userSelection));
 
 	return userSelection;
 
@@ -326,7 +337,6 @@ double getPayment(double cost, int percent) {
 
 	char creditCardNum[MAX_CREDIT_CARD_SIZE + 1]; //stores user's credit card num
 	double payment = 0; //stores user payment
-	bool validInput = false; //flag to see if input was valid
 	bool validCardNum = false; //flag to see if cardNum is valid
 
 	puts("\n-----------Payment-----------");
@@ -336,7 +346,18 @@ double getPayment(double cost, int percent) {
 
 		//prompt for credit card number
 		printf("\n%s", "Please enter your credit card number: ");
-		fgets(creditCardNum, MAX_CREDIT_CARD_SIZE + 1, stdin);		
+		fgets(creditCardNum, MAX_CREDIT_CARD_SIZE + 1, stdin);
+
+		//if creditCardNum has a newline character, remove it, else clear the buffer
+		if (strchr(creditCardNum, '\n') != NULL) {
+			for (size_t i = 0; i < MAX_CREDIT_CARD_SIZE; i++) {
+				if (creditCardNum[i] == '\n') { creditCardNum[i] = '\0'; }
+			}
+		}
+		else {
+			clrBuff();
+		}
+
 
 		//validate number
 		if (validateCreditCardNum(creditCardNum)) { validCardNum = true; }
@@ -358,9 +379,11 @@ double getPayment(double cost, int percent) {
 }//end getPayment()
 
 //printReceipt will print the receipt for the sale
-void printReceipt(char size, char color, double cost, double payment, double totalDonations, int percentDonated) {
+void printReceipt(char size, char color, double cost, double payment, double totalDonations, double percentDonated) {
 
 	int receiptNum = 0;
+	FILE* fp;	
+	fp = fopen(RECEIPTS_FILE_PATH, "a");
 
 	//generate receipt number between 1000 and 9999 (4 digits)
 	srand(time(0));
@@ -368,44 +391,43 @@ void printReceipt(char size, char color, double cost, double payment, double tot
 
 
 	//print receipt
-	puts("\n-----------------------------------------------------------------");
-	printf("Receipt for order #%d\n", receiptNum);
-	puts("-----------------------------------------------------------------");
+	fputs("-----------------------------------------------------------------\n", fp);
+	fprintf(fp, "Receipt for order #%d\n", receiptNum);
+	fputs("-----------------------------------------------------------------\n", fp);
 
 	//print size
-	printf("%s", "Size: ");
-	printSizeOrColor(size);
+	fprintf(fp, "%s", "Size: ");
+	fprintf(fp, "%s\n", printSizeOrColor(size));
 
 	//print color
-	printf("%s", "Color: ");
-	if (color == 'b') {
-		puts("Black");
-	}
-	else if (color == 'w') {
-		puts("White");
-	}
+	fprintf(fp, "%s", "Color: ");
+	fprintf(fp, "%s\n", printSizeOrColor(color));
 
 	//print cost
-	printf("Cost: $%.2f\n", cost);
+	fprintf(fp, "Cost: $%.2f\n", cost);
 
 	//print percentage to fundraiser
-	printf("Percent donated: %d%c\n", percentDonated, '%');
+	fprintf(fp, "Percent donated: %.0f%c\n", percentDonated, '%');
 
 	//print total amount donated 
-	printf("Current amount raised: $%.2f\n", totalDonations);
+	fprintf(fp, "Current amount raised: $%.2f\n", totalDonations);
 
-	puts("\nThank you for donation! Have a great day!");
-	puts("-----------------------------------------------------------------\n");
+	fputs("\nThank you for donation! Have a great day!\n", fp);
+	fputs("-----------------------------------------------------------------\n", fp);
+
+	fclose(fp);
+
+	printf("\nReceipt [#%d] is located here: %s\n",receiptNum, RECEIPTS_FILE_PATH);
 
 }//end printReceipt
 
 //calcDonations returns the donated amount based on user payment and percent to donate
-double calcDonation(int percent, double payment) {
+double calcDonation(double percent, double payment) {
 
 	double donation = 0; //stores the amount of user's payment that will be donated
 
 	//calculate donation
-	donation = payment * ((double)percent / 100);
+	donation = payment * (percent / 100);
 
 	return donation;
 
@@ -414,13 +436,21 @@ double calcDonation(int percent, double payment) {
 //printEndOfDay() prints the end of day details
 void printEndOfDay(double totalSales, double totalDonations) {
 
-	puts("\n-----------------------------------------------------------------");
-	puts("End of day summary: ");
-	puts("-----------------------------------------------------------------\n");
+	//open file for printing
+	FILE* fp;
+	fp = fopen(END_OF_DAY_FILE_PATH, "w");
+	fputs("-----------------------------------------------------------------\n", fp);
+	fputs("End of day summary: ", fp);
+	fputs("\n-----------------------------------------------------------------\n", fp);
 
 	//print total sales and amount raised for organization
-	printf("Total sales today: $%.2f\n", totalSales);
-	printf("Total donations for organization: $%.2f\n\n", totalDonations);
+	fprintf(fp, "Total sales: $%.2f\n", totalSales);
+	fprintf(fp, "Total donations for organization: $%.2f", totalDonations);
+
+	//close file
+	fclose(fp);
+
+	printf("\nEnd of day summary located here: %s\n", END_OF_DAY_FILE_PATH);
 
 }//end printEndOFDay()
 
@@ -449,59 +479,63 @@ void clrBuff() {
 }//end clrBuff()
 
 //takes in the user input and prints the size or color
-void printSizeOrColor(char userChoice) {
+char* printSizeOrColor(char userChoice) {
+
+	char* str = { '  ' };
 
 	switch (userChoice) {
 
 	//sizes
 	case 's': {
-		puts("Small");
+		str = "Small";
 		break;
 	}
 	case 'm': {
-		puts("Medium");
+		str = "Medium";
 		break;
 	}
 	case 'l': {
-		puts("Large");
+		str = "Large";
 		break;
 	}
 	case 'x': {
-		puts("Extra Large");
+		str = "Extra Large";
 		break;
 	}
 	case ADMIN_SIZE: {
-		puts("Admin Code");
+		str = "Admin Code";
 		break;
 	}
 	
 	//colors
 	case 'k': {
-		puts("Black");
+		str = "Black";
 		break;
 	}
 	case 'w': {
-		puts("White");
+		str = "White";
 		break;
 	}
 	case 'r': {
-		puts("Red");
+		str = "Red";
 		break;
 	}
 	case 'o': {
-		puts("Orange");
+		str = "Orange";
 		break;
 	}
 	case 'b': {
-		puts("Blue");
+		str = "Blue";
 		break;
 	}
 	case 'p': {
-		puts("Purple");
+		str = "Purple";
 		break;
 	}
 
 	}
+
+	return str;
 
 }//printSizeOrColor()
 
@@ -558,8 +592,7 @@ char getValidChar(char validChars[]) {
 		//confirm choice with user
 		if (validInput) {
 
-			printf("\nYou selected: ");
-			printSizeOrColor(userChoice);
+			printf("\nYou selected: %s\n", printSizeOrColor(userChoice));
 			puts("Is this correct?");
 			isCorrectInput = getUserDecision();
 
@@ -589,7 +622,7 @@ bool isValidPriceOrPercent(char* str, double range[]) {
 	if (num != 0 && ptr != str) { 
 
 		//check to see if number is in range
-		if (num > min && num < max) { validInput = true; }
+		if (num >= min && num <= max) { validInput = true; }
 
 	}
 
@@ -639,3 +672,30 @@ bool validateCreditCardNum(char cardNum[]) {
 	return validCardNum;
 
 }//validateCreditCardNum
+
+//returns a array of price and percent
+void initTotalSalesAndTotalDonations(double arr[]) {
+
+	FILE* fp;
+	fp = fopen(END_OF_DAY_FILE_PATH, "r");
+
+	//see if file exists
+	if (fp != NULL) {
+		double num = 0; //holds number from input stream
+		int i = 0;//holds the index of arr
+
+		//read the doubles from the file while not end of file
+		while (!feof(fp)) {
+
+			//skip anything not a double and store doubles in array to return
+			if (fscanf(fp, "%*c%lf", &num) != 0) {
+				arr[i] = num;
+				i++;
+			}
+
+		}
+
+		fclose(fp);
+	}
+
+}//end initTotalSalesAndTotalDonations();
