@@ -36,9 +36,10 @@ char getUserDecision();
 void clrBuff();
 bool validScanf(int scanfReturnVal);
 void getPets(Node** listPtr);
+void delPets(Node** listPtr);
 
 //constants
-#define MAX_AGE 30
+#define MAX_AGE 100
 #define MAX_NAME_LENGTH 10
 
 int main(void) {
@@ -55,6 +56,12 @@ int main(void) {
 
 	//print list by age
 	printListByAge(petListHeadPtr);
+
+	//delete pets
+	delPets(&petListHeadPtr);
+
+	//free memory for petListHeadPtr
+	free(petListHeadPtr);
 
 }//end main
 
@@ -120,10 +127,13 @@ void deleteNode(Node** headPtr, char* nameToDelete){
 	Node* currentPtr = *headPtr;
 
 	// Check if node to delete is 1st node!
-	if ((*headPtr)->name == nameToDelete){
+	if (currentPtr != NULL && strcmp(currentPtr->name, nameToDelete) == 0){
 
 		//update headPtr to point to second node
 		*headPtr = (*headPtr)->nextPtr;
+
+		//free data at current pointer
+		free(currentPtr->name);
 
 		// now can delete current node
 		free(currentPtr);
@@ -134,7 +144,7 @@ void deleteNode(Node** headPtr, char* nameToDelete){
 		//Loop through remaining nodes
 		// While haven't reached end of list and 
 		//current node's name != nameToDelete
-		while (currentPtr != NULL && currentPtr->name != nameToDelete) {
+		while (currentPtr != NULL && strcmp(currentPtr->name, nameToDelete) != 0) {
 
 			// go to the next node
 			previousPtr = currentPtr;
@@ -143,11 +153,14 @@ void deleteNode(Node** headPtr, char* nameToDelete){
 		}
 
 		// if found node to delete 	
-		if (currentPtr != NULL) {
+		if (currentPtr != NULL && previousPtr != NULL) {
 
 			// previousPtr is pointing to node BEFORE node to delete 
 			// Update to point to next node
 			previousPtr->nextPtr = currentPtr->nextPtr;
+
+			//delete data on current node
+			free(currentPtr->name);
 
 			//delete current node
 			free(currentPtr);
@@ -291,25 +304,34 @@ void getPets(Node** listPtr) {
 	//when we have valid number of pets, get pets and add to list
 	int petAge = 0; //holds age of pet
 
-	for (int i = 0; i < numPets; i++) {
+	//create an array to store all pet names so that each address for each name is passed to the node
+	// and allocate memory for every string. 
+	// memory allocation: number of pets * size of one string
+	char** allPetNames = malloc(numPets * sizeof(char*));
 
-		//allocate memory for string so memory address for each petName stored in list is different
-		char* petName = malloc(MAX_NAME_LENGTH * (sizeof(char)));
+	for (int i = 0; i < numPets; i++) {
 
 		printf("\nPlease enter pet %d:\n", i + 1);
 
+		//allocate memory for one name on allPetNames array
+		allPetNames[i] = malloc(MAX_NAME_LENGTH * sizeof(char));
+
 		//get pets name
 		printf("%s", "Name: ");
-		fgets(petName, MAX_NAME_LENGTH, stdin);
+		fgets(allPetNames[i], MAX_NAME_LENGTH, stdin);
 
-		//remove newline char from string
-		if (strchr(petName, '\n') != NULL) {
-			for (size_t i = 0; i < sizeof(petName); i++) {
-				if (petName[i] == '\n') { petName[i] = '\0'; }
+		//get rid of newLine
+		if (strchr(allPetNames[i], '\n')) {
+			
+			//iterate through chars using pointers
+			for (char *c = allPetNames[i]; *c; c++) {
+				
+				//if char is equal to new line character
+				if (*c == '\n') {
+					*c = '\0';
+				}
 			}
-		}
-		else {
-			clrBuff();
+
 		}
 
 		//get pets age
@@ -322,9 +344,12 @@ void getPets(Node** listPtr) {
 		} while (scanfRetVal == 0);
 		
 		//add pet to linked list
-		insertNode(listPtr, petAge, petName);
+		insertNode(listPtr, petAge, allPetNames[i]);
 
 	}
+
+	//free memory for allPetsNames
+	free(allPetNames);
 
 }// getPets
 
@@ -344,3 +369,63 @@ bool validScanf(int scanfReturnVal) {
 	return valid;
 
 }//end getInput
+
+//delete pets asks the user to delete pets if they would like
+void delPets(Node** listPtr) {
+
+	bool userFinished = false; //flag to see if user is done deleting pets
+	char userChoice = '\0'; //character to store y or n
+
+	//prompt the user to see what pet they would like to delete
+	if (*listPtr != NULL) {
+		puts("Would you like to remove a pet from the list?");
+		userChoice = getUserDecision();
+
+		//see if user wants to delete a pet or not
+		if (userChoice == 'n') { userFinished = true; }
+	}
+
+	while (!userFinished && (*listPtr) != NULL) {
+
+		printf("%s", "Please enter name of the pet to delete: ");
+		char petName[MAX_NAME_LENGTH] = {' '};
+		fgets(petName, MAX_NAME_LENGTH, stdin);
+
+		//get rid of newLine
+		if (strchr(petName, '\n')) {
+
+			//iterate through chars using pointers
+			for (char* c = petName; *c; c++) {
+
+				//if char is equal to new line character
+				if (*c == '\n') {
+					*c = '\0';
+				}
+			}
+
+		}
+
+		//delete node for that pet name or notify customer no pet with such name
+		deleteNode(listPtr, petName);
+
+		//print remaining pets in list
+		puts("---------- Remaining Pets ----------");
+		printList(*listPtr);
+
+		//ask user if they would like to delete more
+		if ((*listPtr) != NULL) {
+
+			puts("Would you like to delete more pet entries?");
+			
+			userChoice = getUserDecision();
+
+			//see if they answered yes
+			if (userChoice == 'n') {
+				userFinished = true;
+			}
+
+		}
+
+	}
+
+}//delPets
