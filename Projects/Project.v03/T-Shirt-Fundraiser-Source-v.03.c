@@ -33,6 +33,14 @@ typedef struct Organization {
 
 } Organization;
 
+typedef struct Sale {
+
+	char size;
+	char color;
+	double payment;
+
+} Sale;
+
 //constants
 const unsigned int MAX_PIN_ATTEMPTS = 4;
 const unsigned int VALID_PIN = 81405;
@@ -44,13 +52,14 @@ const unsigned int ZIP_MIN = 10000;
 const unsigned int ZIP_MAX = 99999;
 const char* COLOR_STRING = { "blac(k), (w)hite, (r)ed, (o)range, (b)lue, (p)urple" };
 const char* SIZES_STRING = { "(s)mall, (m)edium, (l)arge, (x)tra Large" };
-const char* RECEIPTS_FILE_PATH = "C:\\Users\\Harri\\source\\repos\\HarrisCaleb_CS2060_Project-Iteration3\\tshirtapp\\receipt.txt";
-const char* END_OF_DAY_FILE_PATH = "C:\\Users\\Harri\\source\\repos\\HarrisCaleb_CS2060_Project-Iteration3\\tshirtapp\\tshirtfund.txt";
+const char* RECEIPTS_FILE_PATH = "C:\\Dev\\CS2060 - Programming with C\\tshirtapp\\receipt.txt";
+const char* END_OF_DAY_FILE_PATH = "C:\\Dev\\CS2060 - Programming with C\\tshirtapp\\tshirtfund.txt";
 #define VALID_COLORS {'k', 'w', 'r', 'o', 'b', 'p'}
 #define VALID_SIZES {'s', 'm', 'l', 'x', 'q' }
 #define MAX_COLORS_OR_SIZES 6
 #define ADMIN_SIZE 'q'
 #define MAX_CREDIT_CARD_SIZE 19
+#define MAX_ORG_NAME_LENGTH 20
 
 //function prototypes
 //core functions
@@ -59,19 +68,20 @@ char getUserDecision();
 double getPriceOrPercent(bool isGettingPrice);
 char getSizeOrColor(bool isGettingSize);
 double getPayment(double cost, int percent);
-void printReceipt(char size, char color, double cost, double payment, double totalDonations, double percentDonated);
+void printReceipt(const Organization chosenOrg, const Sale currentSale);
 double calcDonation(double percent, double payment);
 void printEndOfDay(double totalSales, double totalDonations);
+void getOrgs(Organization** listPtr);
+Organization* getOrgToSell(const Organization* listPtr);
 
 //supporting functions
 bool validScanf(int scanfReturnVal);
 void clrBuff();
 char* printSizeOrColor(char userChoice);
-void printSale(double price, int percent, bool startSequence);
+void printSale(const Organization* listPtr, bool startSequence);
 char getValidChar(const char validChars[]);
 bool isValidPriceOrPercent(char* str, double range[]);
 bool validateCreditCardNum(const char cardNum[]);
-void initTotalSalesAndTotalDonations(double arr[]);
 
 
 //Linked List Manipulation Functions
@@ -83,20 +93,8 @@ void printList(const Organization* listPtr);
 int main(void) {
 
 	Organization* orgListHeadPtr = NULL; //holds each organization's data
-	double price = 0; //stores admin determined price for t-shirts
-	double percent = 0; //stores admin determined percentage to be donated
 	bool startSequence = false; //flag to see if program is in start sequence
 	bool endOfDay = false; //flag used to see if end of day has been indicated by admin
-	double payment = 0; //stores the current payment
-	char size = ' '; //stores size of shirt
-	char color = ' '; //stores the color user wants
-
-	//initialize total sales and total donations
-	double totSalesAndTotDonations[2] = { 0, 0 };
-	initTotalSalesAndTotalDonations(totSalesAndTotDonations);
-	double totalPayments = totSalesAndTotDonations[0]; //stores the total payments received
-	double totalDonated = totSalesAndTotDonations[1]; //stores the total amount donated
-
 
 	//get pin entry to start selling program
 	puts("Welcome to CS2060 T-Shirt Fundraiser Program\n");
@@ -113,10 +111,8 @@ int main(void) {
 		*/
 		//get all information for organizations from administrator
 		getOrgs(&orgListHeadPtr);
-		price = getPriceOrPercent(true);
-		percent = getPriceOrPercent(false);
 		startSequence = true;
-		printSale(price, percent, startSequence);
+		printSale(orgListHeadPtr, startSequence);
 
 
 		/*
@@ -128,21 +124,27 @@ int main(void) {
 		do {
 
 			//print the sale
-			printSale(price, percent, startSequence);
+			printSale(orgListHeadPtr, startSequence);
+
+			//get organization user wants to buy from
+			Organization* chosenOrg = getOrgToSell(orgListHeadPtr);
+			
+			//initialize current sale
+			Sale currentSale = {.color = ' ', .payment = 0, .size = ' '};
 
 			//get size
-			size = getSizeOrColor(true);
+			currentSale.size = getSizeOrColor(true);
 
 			//if not admin exit code
-			if (size != ADMIN_SIZE) {
+			if (currentSale.size != ADMIN_SIZE) {
 
 				//get golor and payment
-				color = getSizeOrColor(false);
-				payment = getPayment(price, percent);
+				currentSale.color = getSizeOrColor(false);
+				currentSale.payment = getPayment(price, percent);
 
 				//add payment to total payments and calculate donation
-				totalPayments += payment;
-				totalDonated += calcDonation(percent, payment);
+				chosenOrg->totalSales += currentSale.payment;
+				chosenOrg->totalDonated += calcDonation(chosenOrg->percentToDonate, currentSale.payment);
 
 				//prompt user to see if they would like a receipt
 				puts("\nWould you like a receipt?");
@@ -173,6 +175,9 @@ int main(void) {
 		//print end of day details
 		printEndOfDay(totalPayments, totalDonated);
 
+		//free memory for organizations list
+		free(orgListHeadPtr);
+
 	}// end core program
 
 	puts("\nExiting program");
@@ -188,7 +193,7 @@ int main(void) {
 */
 
 //gets organizations setup information from administrator
-void getPets(Organization** listPtr) {
+void getOrgs(Organization** listPtr) {
 
 	int scanfRetVal = 0; //stores the scanf return value
 	bool validInput = false; //flag to see if user input is valid
@@ -198,7 +203,7 @@ void getPets(Organization** listPtr) {
 
 		//get how many organizations will be entered
 		printf("%s", "How many organizations will be set up? ");
-		scanfRetVal = scanf("%lu", &numOrgs);
+		scanfRetVal = scanf("%u", &numOrgs);
 		clrBuff();
 
 		if (validScanf(scanfRetVal)) { validInput = true; }
@@ -209,9 +214,100 @@ void getPets(Organization** listPtr) {
 	//initialize variables to store price and percent
 	double price = 0;
 	double percent = 0;
-	char**
+	char** orgNames = malloc(numOrgs * sizeof(char*));
 
-}//getPets
+	for (int i = 0; i < numOrgs; i++) {
+
+		printf("\nPlease enter the name of organization %d: ", i + 1);
+
+		//allocate memory for one name
+		orgNames[i] = malloc(MAX_ORG_NAME_LENGTH * sizeof(char));
+
+		//get organization's name
+		fgets(orgNames[i], MAX_ORG_NAME_LENGTH, stdin);
+
+		//get rid of newLine
+		if (strchr(orgNames[i], '\n')) {
+
+			//iterate through chars using pointers
+			for (char* c = orgNames[i]; *c; c++) {
+
+				//if char is equal to new line character
+				if (*c == '\n') {
+					*c = '\0';
+				}
+			}
+
+		}
+
+		//get price and percent for organization
+		price = getPriceOrPercent(true);
+		percent = getPriceOrPercent(false);
+
+		//add organization to list
+		insertNode(listPtr, orgNames[i], price, percent);
+
+	}
+
+	//free memory for org names array
+	free(orgNames);
+	
+
+}//getOrgs
+
+//returns a pointer to the organization that user chose
+Organization* getOrgToSell(const Organization* listPtr) {
+
+	Organization* userChosenOrg = NULL; //stores pointer to user chosen organization
+	bool orgFound = false; //flag to see if organization has been found
+
+	//check to see if list is empty
+	if (listPtr != NULL) {
+
+		while (!orgFound) {
+			//prompt user to select organization from list
+			char userChosenName[MAX_ORG_NAME_LENGTH] = { ' ' };
+			printf("%s", "Please enter the name of the organization you would like to buy from: ");
+			fgets(userChosenName, MAX_ORG_NAME_LENGTH, stdin);
+
+			//get rid of newLine
+			if (strchr(userChosenName, '\n')) {
+
+				//iterate through chars using pointers
+				for (char* c = userChosenName; *c; c++) {
+
+					//if char is equal to new line character
+					if (*c == '\n') {
+						*c = '\0';
+					}
+				}
+
+			}
+
+			//check to see if name is in list
+			Organization* currentPtr = listPtr;
+
+			//while current pointer isnt null and name doesnt match
+			while (currentPtr != NULL && strcmp(currentPtr->orgName, userChosenName) != 0) {
+				currentPtr = currentPtr->nextPtr;
+			}
+
+			//if org found
+			if (currentPtr != NULL && strcmp(currentPtr->orgName, userChosenName) == 0) {
+				orgFound = true;
+				userChosenOrg = currentPtr;
+			}
+			else {
+				puts("Organization not found.");
+			}
+
+		}
+
+	}
+
+	return userChosenOrg;
+
+}//getOrgToSell
 
 //getPin() function gets pin from user and see's if its correct
 bool getPin() {
@@ -428,7 +524,7 @@ double getPayment(double cost, int percent) {
 }//end getPayment()
 
 //printReceipt will print the receipt for the sale
-void printReceipt(char size, char color, double cost, double payment, double totalDonations, double percentDonated) {
+void printReceipt(const Organization chosenOrg, const Sale currentSale) {
 
 	int receiptNum = 0;
 	FILE* fp;
@@ -589,22 +685,41 @@ char* printSizeOrColor(char userChoice) {
 }//printSizeOrColor()
 
 //print sale details prints the details of the t-shirt sale
-void printSale(double price, int percent, bool startSequence) {
+void printSale(const Organization* listPtr, bool startSequence) {
 
-	if (startSequence) {
-		puts("\n-----------------------------------------------------------------");
-		puts("T-shirt sale program setup complete with the following setup:");
-		printf("Price: $%.2f\nPercent to donate: %d%c\n",
-			price, percent, '%');
-		puts("-----------------------------------------------------------------\n");
-	}
+	//check to see if list is empty
+	if (listPtr != NULL) {
 
-	else {
-		puts("\n-----------------------------------------------------------------");
-		puts("Welcome to CS2060 T-Shirt Fundraiser! Here are the details for today's sale:");
-		printf("Price: $%.2f\nPercent being donated: %d%c\n",
-			price, percent, '%');
-		puts("-----------------------------------------------------------------\n");
+		Organization* currentPtr = listPtr;
+
+		if (startSequence) {
+
+			puts("\n-----------------------------------------------------------------");
+			puts("T-shirt sale program setup complete with the following setup:");
+			puts("-----------------------------------------------------------------\n");
+
+		}
+
+		else {
+			puts("\n-----------------------------------------------------------------");
+			puts("Welcome to CS2060 T-Shirt Fundraiser! Here are the details for today's sale:");
+			puts("-----------------------------------------------------------------\n");
+		}
+
+		//iterate through linked list printing values
+		while (currentPtr != NULL) {
+
+			//display data and go to next node
+			printf("Organization: %s\nPrice: $%.2f\nPercent to donate: %.0f%c\n\n",
+				currentPtr->orgName, currentPtr->tshirtPrice, currentPtr->percentToDonate, '%');
+
+			currentPtr = currentPtr->nextPtr;
+
+		}
+
+	}//end if !null
+	else { 
+		puts("No organizations have been set up to sell. ");
 	}
 
 }//end printSale()
@@ -721,33 +836,6 @@ bool validateCreditCardNum(const char cardNum[]) {
 	return validCardNum;
 
 }//validateCreditCardNum
-
-//returns a array of price and percent
-void initTotalSalesAndTotalDonations(double arr[]) {
-
-	FILE* fp;
-	fp = fopen(END_OF_DAY_FILE_PATH, "r");
-
-	//see if file exists
-	if (fp != NULL) {
-		double num = 0; //holds number from input stream
-		int i = 0;//holds the index of arr
-
-		//read the doubles from the file while not end of file
-		while (!feof(fp)) {
-
-			//skip anything not a double and store doubles in array to return
-			if (fscanf(fp, "%*c%lf", &num) != 0) {
-				arr[i] = num;
-				i++;
-			}
-
-		}
-
-		fclose(fp);
-	}
-
-}//end initTotalSalesAndTotalDonations();
 
 /*
 * Linked List Manipulation Functions
