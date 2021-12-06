@@ -70,7 +70,7 @@ char getSizeOrColor(bool isGettingSize);
 double getPayment(double cost, int percent);
 void printReceipt(const Organization chosenOrg, const Sale currentSale);
 double calcDonation(double percent, double payment);
-void printEndOfDay(double totalSales, double totalDonations);
+void printEndOfDay(const Organization* listPtr);
 void getOrgs(Organization** listPtr);
 Organization* getOrgToSell(const Organization* listPtr);
 
@@ -86,8 +86,6 @@ bool validateCreditCardNum(const char cardNum[]);
 
 //Linked List Manipulation Functions
 void insertNode(Organization** headPtr, char* name, double price, double percent);
-void deleteNode(Organization** headPtr, char* nameToDelete);
-void printList(const Organization* listPtr);
 
 
 int main(void) {
@@ -140,7 +138,7 @@ int main(void) {
 
 				//get golor and payment
 				currentSale.color = getSizeOrColor(false);
-				currentSale.payment = getPayment(price, percent);
+				currentSale.payment = getPayment(chosenOrg->tshirtPrice, chosenOrg->percentToDonate);
 
 				//add payment to total payments and calculate donation
 				chosenOrg->totalSales += currentSale.payment;
@@ -151,14 +149,14 @@ int main(void) {
 
 				//if yes, print receipt
 				if (getUserDecision() == 'y') {
-					printReceipt(size, color, price, payment, totalDonated, percent);
+					printReceipt(*chosenOrg, currentSale);
 				}
 				else { puts("\nThank you for your donation! Have a great day!"); }
 
 			}//end if NOT admin exit code
 
 			//if size equals admin exit code
-			else if (size == ADMIN_SIZE) {
+			else if (currentSale.size == ADMIN_SIZE) {
 
 				puts("\n**********You have entered the admin menu.**********\n");
 
@@ -173,7 +171,7 @@ int main(void) {
 		} while (!endOfDay);
 
 		//print end of day details
-		printEndOfDay(totalPayments, totalDonated);
+		printEndOfDay(orgListHeadPtr);
 
 		//free memory for organizations list
 		free(orgListHeadPtr);
@@ -202,11 +200,11 @@ void getOrgs(Organization** listPtr) {
 	do {
 
 		//get how many organizations will be entered
-		printf("%s", "How many organizations will be set up? ");
+		printf("%s", "\nHow many organizations will be set up? ");
 		scanfRetVal = scanf("%u", &numOrgs);
 		clrBuff();
 
-		if (validScanf(scanfRetVal)) { validInput = true; }
+		if (validScanf(scanfRetVal) && numOrgs > 0) { validInput = true; }
 		else { puts("Invalid Entry"); }
 
 	} while (!validInput);
@@ -260,11 +258,13 @@ Organization* getOrgToSell(const Organization* listPtr) {
 
 	Organization* userChosenOrg = NULL; //stores pointer to user chosen organization
 	bool orgFound = false; //flag to see if organization has been found
+	bool userConfirmed = false; //flag to see if user confirmed choice
+	char userChoice = ' '; //stores user choice for y or n
 
 	//check to see if list is empty
 	if (listPtr != NULL) {
 
-		while (!orgFound) {
+		while (!orgFound && !userConfirmed) {
 			//prompt user to select organization from list
 			char userChosenName[MAX_ORG_NAME_LENGTH] = { ' ' };
 			printf("%s", "Please enter the name of the organization you would like to buy from: ");
@@ -294,15 +294,32 @@ Organization* getOrgToSell(const Organization* listPtr) {
 
 			//if org found
 			if (currentPtr != NULL && strcmp(currentPtr->orgName, userChosenName) == 0) {
-				orgFound = true;
-				userChosenOrg = currentPtr;
+				
+				//see if user confirms choice
+				printf("You selected %s. Is this correct?\n", currentPtr->orgName);
+				userChoice = getUserDecision();
+
+				if (userChoice == 'y') {
+					orgFound = true;
+					userChosenOrg = currentPtr;
+				}
+
 			}
 			else {
-				puts("Organization not found.");
+				puts("\nOrganization not found. (Note: Entry is case sensitive)\n");
 			}
 
 		}
 
+	}
+	else {
+		puts("List is empty.");
+	}
+
+	//if org found, print sale information for that organization
+	if (orgFound) {
+		printf("\nYou selected %s:\nT-shirt Price: %.2f\nPercent Being Donated: %.0f%c\n\n",
+			userChosenOrg->orgName, userChosenOrg->tshirtPrice, userChosenOrg->percentToDonate, '%');
 	}
 
 	return userChosenOrg;
@@ -539,23 +556,26 @@ void printReceipt(const Organization chosenOrg, const Sale currentSale) {
 	fputs("-----------------------------------------------------------------\n", fp);
 	fprintf(fp, "Receipt for order #%d\n", receiptNum);
 	fputs("-----------------------------------------------------------------\n", fp);
+	
+	//print organization
+	fprintf(fp, "Organization: %s\n", chosenOrg.orgName);
 
 	//print size
 	fprintf(fp, "%s", "Size: ");
-	fprintf(fp, "%s\n", printSizeOrColor(size));
+	fprintf(fp, "%s\n", printSizeOrColor(currentSale.size));
 
 	//print color
 	fprintf(fp, "%s", "Color: ");
-	fprintf(fp, "%s\n", printSizeOrColor(color));
+	fprintf(fp, "%s\n", printSizeOrColor(currentSale.color));
 
 	//print cost
-	fprintf(fp, "Cost: $%.2f\n", cost);
+	fprintf(fp, "Cost: $%.2f\n", chosenOrg.tshirtPrice);
 
 	//print percentage to fundraiser
-	fprintf(fp, "Percent donated: %.0f%c\n", percentDonated, '%');
+	fprintf(fp, "Percent donated: %.0f%c\n", chosenOrg.percentToDonate, '%');
 
 	//print total amount donated 
-	fprintf(fp, "Current amount raised: $%.2f\n", totalDonations);
+	fprintf(fp, "Current amount raised: $%.2f\n", chosenOrg.totalDonated);
 
 	fputs("\nThank you for donation! Have a great day!\n", fp);
 	fputs("-----------------------------------------------------------------\n", fp);
@@ -579,7 +599,7 @@ double calcDonation(double percent, double payment) {
 }//end calcDonation
 
 //printEndOfDay() prints the end of day details
-void printEndOfDay(double totalSales, double totalDonations) {
+void printEndOfDay(const Organization* listPtr) {
 
 	//open file for printing
 	FILE* fp;
@@ -588,9 +608,19 @@ void printEndOfDay(double totalSales, double totalDonations) {
 	fputs("End of day summary: ", fp);
 	fputs("\n-----------------------------------------------------------------\n", fp);
 
-	//print total sales and amount raised for organization
-	fprintf(fp, "Total sales: $%.2f\n", totalSales);
-	fprintf(fp, "Total donations for organization: $%.2f", totalDonations);
+	//print total sales and amount raised for each organization in list
+	Organization* currentPtr = listPtr; //used to walk through list
+	
+	while (currentPtr != NULL) {
+
+		//print data
+		fprintf(fp, "\nOrganization: %s\n", currentPtr->orgName);
+		fprintf(fp, "Total sales: $%.2f\n", currentPtr->totalSales);
+		fprintf(fp, "Total donations for organization: $%.2f", currentPtr->totalDonated);
+
+		//go to next node
+		currentPtr = currentPtr->nextPtr;
+	}
 
 	//close file
 	fclose(fp);
@@ -857,6 +887,10 @@ void insertNode(Organization** headPtr, char* name, double price, double percent
 		orgPtr->tshirtPrice = price;
 		orgPtr->percentToDonate = percent;
 
+		//initialize total donated and total sales
+		orgPtr->totalDonated = 0;
+		orgPtr->totalSales = 0;
+
 		//figure out where new node belongs in list
 		Organization* previousPtr = NULL;
 		Organization* currentPtr = *headPtr;
@@ -885,88 +919,3 @@ void insertNode(Organization** headPtr, char* name, double price, double percent
 	}
 
 }//insertNode
-
-//deletes an organization from the linked list
-void deleteNode(Organization** headPtr, char* nameToDelete) {
-
-	//create nodes to keep track of previous and current pointers
-	Organization* previousPtr = NULL;
-	Organization* currentPtr = *headPtr;
-
-	// Check if node to delete is 1st node
-	if (currentPtr != NULL && strcmp(currentPtr->orgName, nameToDelete) == 0) {
-
-		//update headPtr to point to second node
-		*headPtr = (*headPtr)->nextPtr;
-
-		//free data at current pointer
-		free(currentPtr->orgName);
-
-		//delete current node
-		free(currentPtr);
-		currentPtr = NULL;
-	}
-	else {
-
-		//Loop through remaining nodes
-		// While haven't reached end of list and 
-		//current node's name != nameToDelete
-		while (currentPtr != NULL && strcmp(currentPtr->orgName, nameToDelete) != 0) {
-
-			// go to the next node
-			previousPtr = currentPtr;
-			currentPtr = currentPtr->nextPtr;
-
-		}
-
-		// if found node to delete 	
-		if (currentPtr != NULL && previousPtr != NULL) {
-
-			// Update to point to next node
-			previousPtr->nextPtr = currentPtr->nextPtr;
-
-			//delete data on current node
-			free(currentPtr->orgName);
-
-			//delete current node
-			free(currentPtr);
-			currentPtr = NULL;
-
-		}
-
-		//NULL, node is not in list!	
-		else {
-			printf("Organization: %s not in list! (*note: name is case sensitive)\n\n", nameToDelete);
-		}
-
-	} // not 1st node
-
-} //deleteNode
-
-//prints organization on list
-void printList(const Organization* listPtr) {
-
-	//walk list and print values if list is not empty
-	if (listPtr != NULL) {
-
-		printf("Organizations:\n");
-		puts("--------------------------------------");
-
-		//set currentPtr to first node in list
-		Organization* currentPtr = listPtr;
-
-		//loop through the list until the last node points to null
-		while (currentPtr != NULL) {
-
-			//display and go to next node
-			puts(currentPtr->orgName);
-			currentPtr = currentPtr->nextPtr;
-		}
-
-	}
-	//linked list is empty
-	else {
-		puts("No organizations in list.");
-	}
-
-}//printList
