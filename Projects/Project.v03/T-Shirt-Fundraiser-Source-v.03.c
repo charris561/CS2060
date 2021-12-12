@@ -656,7 +656,7 @@ void clrBuff() {
 //takes in the user input and prints the size or color
 char* printSizeOrColor(char userChoice) {
 
-	char* str = { '  ' };
+	char* str = { ' ' };
 
 	switch (userChoice) {
 
